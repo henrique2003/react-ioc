@@ -1,18 +1,28 @@
-import React, { createContext, ReactNode, Context } from 'react'
+import React, { createContext, Context, useState, useEffect } from 'react'
+import { IocContainerValue, IocContainerProviderProps } from './ioc-container-types'
 
-export interface IocContainer {
-  [key: string]: any
+export const IocContainerContext: Context<IocContainerValue | undefined> = createContext<IocContainerValue | undefined>(undefined)
+
+export const IocContainerProvider: React.FC<IocContainerProviderProps> = ({ children, containers }) => {
+  const [containersMap, setContainersMap] = useState(new Map())
+
+  useEffect(() => {
+    const mapper = new Map()
+
+    containers.map((containerItem) => {
+      mapper.set(containerItem.name, containerItem)
+    })
+
+    setContainersMap(mapper)
+  }, [containers])
+
+  function getContainer<T>(ctn: new () => T): any {
+    return containersMap.get(ctn.name)
+  }
+
+  return (
+    <IocContainerContext.Provider value={{ getContainer }}>
+      {children}
+    </IocContainerContext.Provider>
+  )
 }
-
-export const IocContainerContext: Context<IocContainer | undefined> = createContext<IocContainer | undefined>(undefined)
-
-interface IocContainerProviderProps {
-  container: IocContainer
-  children: ReactNode
-}
-
-export const IocContainerProvider: React.FC<IocContainerProviderProps> = ({ container, children }) => (
-  <IocContainerContext.Provider value={container}>
-    {children}
-  </IocContainerContext.Provider>
-)
